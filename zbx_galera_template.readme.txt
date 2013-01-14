@@ -1,0 +1,24 @@
+This template cloned version of zabbix MySQL Template
+
+First of all it needs (what comes w/ Percona at default) /usr/bin/clustercheck command and you should be sure you have this commit on that https://github.com/olafz/percona-clustercheck/commit/20bfc2318dad14e846967a363e6bb14d9d934d99 for zabbix checks
+
+And you should add this lines to zabbix_agentd.conf
+
+###### GALERA ########
+UserParameter=mysql.clustercheck,echo $(clustercheck > /dev/null)$?
+UserParameter=mysql.replicated_bytes,mysql -B --skip-column-names -e "SHOW STATUS LIKE 'wsrep_replicated_bytes'" | awk '{print $2}'
+UserParameter=mysql.received_bytes,mysql -B --skip-column-names -e "SHOW STATUS LIKE 'wsrep_received_bytes'" | awk '{print $2}'
+UserParameter=mysql.slownode,mysql -B --skip-column-names -e "SHOW STATUS LIKE 'wsrep_flow_control_sent'" | awk '{print $2}'
+UserParameter=mysql.clusteruuid,mysql -B --skip-column-names -e "SHOW STATUS LIKE 'wsrep_local_state_uuid'" | awk '{print $2}'
+UserParameter=mysql.clustersize,mysql -B --skip-column-names -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | awk '{print $2}'
+
+
+It checks;
+	Trigger;
+		- The node is Synced
+		- The node UUID changed
+		- The node started to run slower than previous checks
+		- Cluster size changed
+	Graphs;
+		- The node sent bytes
+		- The node received bytes
